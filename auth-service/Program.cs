@@ -1,8 +1,11 @@
-﻿using System;
+﻿using auth_service.Configuration;
 using auth_service.Database;
 using auth_service.Extensions;
 using auth_service.Models;
 using auth_service.Services;
+using KafkaFlow;
+using KafkaFlow.Serializer;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
@@ -19,6 +22,9 @@ namespace auth_service
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            // Configuration
+            builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafka"));
 
             builder.Services.AddEndpointsApiExplorer();
 
@@ -53,12 +59,36 @@ namespace auth_service
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
             );
 
+            builder.Services.AddAuthorization();
+            builder
+                .Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie();
+
             // Identity
             builder
                 .Services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddApiEndpoints();
-            builder.Services.AddSingleton<IEmailSender<ApplicationUser>, NoOpEmailSender>();
+            builder.Services.AddSingleton<IEmailSender<ApplicationUser>, KafkaEmailSender>();
+
+            // Kafka
+            var kafkaSettings = builder.Configuration.GetSection("Kafka").Get<KafkaSettings>();
+            builder.Services.AddKafka(kafka =>
+                kafka
+                    .UseConsoleLog()
+                    .AddCluster(cluster =>
+                        cluster
+                            .WithBrokers(new[] { kafkaSettings.KafkaConnection })
+                            .CreateTopicIfNotExists(kafkaSettings.TopicNames.AccountManagement)
+                            .AddProducer(
+                                kafkaSettings.ProducerName,
+                                producer =>
+                                    producer
+                                        .DefaultTopic(kafkaSettings.TopicNames.AccountManagement)
+                                        .AddMiddlewares(m => m.AddSerializer<JsonCoreSerializer>())
+                            )
+                    )
+            );
 
             builder.Services.AddHealthChecks();
 

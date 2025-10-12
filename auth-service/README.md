@@ -2,7 +2,7 @@
 
 ## Предварительная настройка
 
-Зависимости: Docker, Docker Compose
+Зависимости: Docker, Docker Compose, [broker-service](https://github.com/IKIT-Command-Project-VAD/broker-service)
 
 ### Настройка репозитория
 
