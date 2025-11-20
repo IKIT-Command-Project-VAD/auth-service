@@ -12,7 +12,7 @@ services:
     volumes:
       - ShoppingList_keycloak_db_data:/var/lib/postgresql/data
     ports:
-      - "15432:5432"
+      - "${KC_DB_PORT_PUBLIC}:5432"
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.4.4
