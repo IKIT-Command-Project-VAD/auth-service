@@ -50,11 +50,7 @@ services:
 
 volumes:
   ShoppingList_keycloak_db_data:
-    name: shoppinglist-keycloak-dev_ShoppingList_keycloak_db_data
-    external: true
   ShoppingList_keycloak_data:
-    name: shoppinglist-keycloak-dev_ShoppingList_keycloak_data
-    external: true
 
 networks:
   shopping_list_network:
