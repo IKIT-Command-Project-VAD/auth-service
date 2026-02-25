@@ -36,7 +36,7 @@ services:
       - ShoppingList_keycloak_data:/opt/keycloak/data
       - ./exports:/temp/exports
     ports:
-      - "${KC_PUBLIC_PORT}:${KC_HTTP_PORT}"
+      - "${KC_PORT_PUBLIC}:${KC_HTTP_PORT}"
     networks:
       default:
       shopping_list_network:
@@ -45,12 +45,16 @@ services:
   
   mailpit:
     ports:
-      - "9125:1025"   # SMTP
-      - "9120:8025"   # Web UI
+      - "${MP_SMTP_PORT_PUBLIC}:1025"   # SMTP
+      - "${MP_WEBUI_PORT_PUBLIC}:8025"   # Web UI
 
 volumes:
   ShoppingList_keycloak_db_data:
+    name: shoppinglist-keycloak-dev_ShoppingList_keycloak_db_data
+    external: true
   ShoppingList_keycloak_data:
+    name: shoppinglist-keycloak-dev_ShoppingList_keycloak_data
+    external: true
 
 networks:
   shopping_list_network:
