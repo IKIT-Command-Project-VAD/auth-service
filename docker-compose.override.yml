@@ -1,0 +1,57 @@
+services:
+  keycloak-db:
+    environment:
+      POSTGRES_DB: ${KC_DB_NAME}
+      POSTGRES_USER: ${KC_DB_USER}
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD}
+    volumes:
+      - ShoppingList_keycloak_db_data:/var/lib/postgresql/data
+    ports:
+      - "${KC_DB_PORT_PUBLIC}:${KC_DB_PORT_INTERNAL}"
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KC_DB_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  keycloak:
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD}
+
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-db
+      KC_DB_URL_PORT: ${KC_DB_PORT_INTERNAL}
+      KC_DB_URL_DATABASE: ${KC_DB_NAME}
+      KC_DB_USERNAME: ${KC_DB_USER}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME: auth.sl.localhost
+    volumes:
+      - ShoppingList_keycloak_data:/opt/keycloak/data
+      - ./exports:/temp/exports
+    ports:
+      - "${KC_PUBLIC_PORT}:${KC_HTTP_PORT}"
+    networks:
+      default:
+      shopping_list_network:
+        aliases:
+          - auth.sl.localhost
+  
+  mailpit:
+    ports:
+      - "9125:1025"   # SMTP
+      - "9120:8025"   # Web UI
+
+volumes:
+  ShoppingList_keycloak_db_data:
+  ShoppingList_keycloak_data:
+
+networks:
+  shopping_list_network:
+    external: true
